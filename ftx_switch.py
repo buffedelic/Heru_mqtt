@@ -1,15 +1,23 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -
 
-import minimalmodbus
+import instrument
 import paho.mqtt.client as mqtt
 
-instr = minimalmodbus.Instrument('/dev/ttyUSB0', 1) #port, slaveadress
+instr = HeruFTX('/dev/ttyUSB0', 1) #port, slaveadress
+instr.mode = minimalmodbus.MODE_RTU
+instr.serial.timeout  = 0.2 #Timeout might be adjusted to allow full reading of message
+instr.debug = False
 instr.precalculate_read_size = False
+
+
+
+#instr = minimalmodbus.Instrument('/dev/ttyUSB0', 1) #port, slaveadress
+#instr.precalculate_read_size = False
 #instr.debug = True
 
-switch = ["Unit on", "Overpressure mode", "Boost mode", "Away mode", "Clear alarms",
-          "Reset filter timer"]
+#switch = ["Unit on", "Overpressure mode", "Boost mode", "Away mode", "Clear alarms",
+#          "Reset filter timer"]
 statusstr = ["off", "on"]
 
 def set_switch(register, state):
