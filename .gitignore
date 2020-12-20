@@ -1,0 +1,7 @@
+*.swp
+*.log
+*.out
+power-pi.txt
+._*
+.vscode
+test.py

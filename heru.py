@@ -7,7 +7,7 @@ class HeruFTX( minimalmodbus.Instrument ):
     def __init__(self, portname, slaveaddress):
         minimalmodbus.Instrument.__init__(self, portname, slaveaddress)
     
-    def coil_status(self):
+    def coil_status(self, human=False):
         number_registers = 6
         i = 0
         l = []
@@ -16,17 +16,44 @@ class HeruFTX( minimalmodbus.Instrument ):
             while value is 3:
                 try:
                     value = self.read_bit(i, functioncode=1)
-                    if value == 0: #format value to human language
-                        value = "Off"
-                    else:
-                        value = "On"
+                    if human:
+                        if value == 0: #format value to human language
+                            value = "Off"
+                        else:
+                            value = "On"
                 except:
                     pass
             l.append(value)
             i = i + 1
         return l
     
-    def input_status(self):
+    def set_coil_status(self, register, value=None):
+
+        ### Functioncode 5 ########
+        #0x00001 Unit on
+        #0x00002 Overpressure mode
+        #0x00003 Boost mode
+        #0x00004 Away mode
+        #0x00005 Clear Alarms
+        #0x00006 Reset filter timer
+        ###########################
+        try:    
+            if value.lower() == "off": #format value from human language
+                value = 0
+            elif value.lower() == "on":
+                value = 1
+        except:
+            pass
+
+        # Check if state change is needed
+        if self.read_bit(register -1, functioncode=1) is not value:
+            try:
+                self.write_bit(register -1, value, functioncode=5)
+            except:
+                print("Failed to connuicate with instrument")
+
+
+    def input_status(self, human=False):
         number_registers = 34
         i = 0
         l = []
@@ -36,10 +63,11 @@ class HeruFTX( minimalmodbus.Instrument ):
             while value is 3:
                 try:
                     value = self.read_bit(i, functioncode=2)
-                    if value == 0: #format value to human language
-                        value = "Off"
-                    else:
-                        value = "On"
+                    if human:
+                        if value == 0: #format value to human language
+                            value = "Off"
+                        else:
+                            value = "On"
                 except:
                     pass
             l.append(value)

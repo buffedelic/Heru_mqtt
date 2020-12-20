@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -
 
-import instrument
+from heru import HeruFTX
+import minimalmodbus
 import paho.mqtt.client as mqtt
 
 instr = HeruFTX('/dev/ttyUSB0', 1) #port, slaveadress
@@ -10,55 +11,6 @@ instr.serial.timeout  = 0.2 #Timeout might be adjusted to allow full reading of 
 instr.debug = False
 instr.precalculate_read_size = False
 
-
-
-#instr = minimalmodbus.Instrument('/dev/ttyUSB0', 1) #port, slaveadress
-#instr.precalculate_read_size = False
-#instr.debug = True
-
-#switch = ["Unit on", "Overpressure mode", "Boost mode", "Away mode", "Clear alarms",
-#          "Reset filter timer"]
-statusstr = ["off", "on"]
-
-def set_switch(register, state):
-	# will put FTX in desired state if not allready.
-
-	if state == "on":
-		if read_status(register) == 0:
-			switch_status(0, register)
-		else:
-			print("No change in state")
-			pass
-	elif state == "off":
-		if read_status(register) == 1:
-			switch_status(1, register)
-		else:
-			print("No change in state")
-			pass
-
-def read_status(register):
-	status = None
-	while status is None:
-		try:
-			status = instr.read_bit(register, functioncode=1) #Read state
-			print("{} is {}".format(switch[register], statusstr[status]))
-			return status
-		except:
-			pass
-
-def switch_status(status, register):
-	if status == 1:
-		switched_status = 0
-	else:
-		switched_status = 1
-	done = False
-	while not done:
-		try:
-			instr.write_bit(register, switched_status, functioncode=5) #Switch between on/off
-			done = True
-			print("{} switched to {}".format(switch[register], statusstr[switched_status]))
-		except:
-			pass
 
 def on_subscribe(client, userdata, mid, granted_qos):
     print("Subscribed: "+str(mid)+" "+str(granted_qos))
@@ -78,8 +30,7 @@ if __name__ == '__main__':
 #0x00006 Reset filter timer
 ###########################
 
-#	set_switch(2,"off")
-#	set_switch(3, "off")
+	instr.set_coil_status(3, "on")
 
 	broker_adress='homeassistant.lan'
 	subscribe_topic='hvac/heru/power/set'
