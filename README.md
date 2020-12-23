@@ -3,4 +3,6 @@ Modbus to mqtt for hvac unit from Östberg
 
 
 ### ToDo
-- ftx switch, subclassing heru.py
+- Fix working check aganst remote control inputs. Poll device..
+- Work with fan speed registers
+- Temperature control?
