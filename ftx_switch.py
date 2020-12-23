@@ -59,26 +59,25 @@ if __name__ == '__main__':
     broker_adress='homeassistant'
     subscribe_topic='hvac/heru/power/set'
     print("Connecting to broker {}".format(broker_adress))
-    client = mqtt.Client("Heru asdasdasdaasdas")
+    client = mqtt.Client(client_id="Heru control", clean_session=True)
     client.username_pw_set("buff", "mammas")
     client.connect(broker_adress, 1883)
-    client.clean_session = True
     client.on_subscribe = on_subscribe
     #client.on_connect = on_connect
     client.on_message = on_message
 
     for topic in topics:
         client.subscribe(topic)
-    # client.loop_start()
-    client.loop_forever()
+    client.loop_start()
+    # client.loop_forever()
 
-    # while True:
+    while True:
         # pass
-        # for i in range(1, 7):
-        #     print("polling register: " + str(i))
-        #     poll_device(i)
-        #     time.sleep(2)
-        # time.sleep(15)
+        time.sleep(15)
+        for i in range(1, 7):
+            print("polling register: " + str(i))
+            poll_device(i)
+            time.sleep(2)
 
 
 pass
