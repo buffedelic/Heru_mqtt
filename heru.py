@@ -27,6 +27,9 @@ class HeruFTX( minimalmodbus.Instrument ):
             i = i + 1
         return l
     
+    def get_coil_status(self, register):
+        return self.read_bit(register-1, functioncode=1)
+    
     def set_coil_status(self, register, value=None):
 
         ### Functioncode 5 ########
@@ -50,7 +53,7 @@ class HeruFTX( minimalmodbus.Instrument ):
             try:
                 self.write_bit(register -1, value, functioncode=5)
             except:
-                print("Failed to connuicate with instrument")
+                print("Failed to communicate with instrument")
 
 
     def input_status(self, human=False):
