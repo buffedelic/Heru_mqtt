@@ -34,10 +34,10 @@ def handle_time_event():
     instr.debug = False
     instr.precalculate_read_size = False
 
-    coil_status = instr.coil_status()
-    input_status = instr.input_status()
-    input_register = instr.input_register()
-    holding_register = instr.holding_register()
+    coil_status = instr.dump_coil_status()
+    input_status = instr.dump_input_status()
+    input_register = instr.dump_input_register()
+    holding_register = instr.dump_holding_register()
 
     #       Message formatting
     #/----static----/---i_text----/-i_v-

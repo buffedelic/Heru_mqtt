@@ -7,7 +7,7 @@ class HeruFTX( minimalmodbus.Instrument ):
     def __init__(self, portname, slaveaddress):
         minimalmodbus.Instrument.__init__(self, portname, slaveaddress)
     
-    def coil_status(self, human=False):
+    def dump_coil_status(self, human=False):
         number_registers = 6
         i = 0
         l = []
@@ -28,7 +28,7 @@ class HeruFTX( minimalmodbus.Instrument ):
         return l
     
     def get_coil_status(self, register):
-        return self.read_bit(register-1, functioncode=1)
+        return self.read_bit(register -1 , functioncode=1)
     
     def set_coil_status(self, register, value=None):
 
@@ -49,14 +49,14 @@ class HeruFTX( minimalmodbus.Instrument ):
             pass
 
         # Check if state change is needed
-        if self.read_bit(register -1, functioncode=1) is not value:
+        if self.read_bit(register -1 , functioncode=1) is not value:
             try:
                 self.write_bit(register -1, value, functioncode=5)
             except:
                 print("Failed to communicate with instrument")
 
 
-    def input_status(self, human=False):
+    def dump_input_status(self, human=False):
         number_registers = 34
         i = 0
         l = []
@@ -79,8 +79,11 @@ class HeruFTX( minimalmodbus.Instrument ):
                 i = 9
 
         return l
+    
+    def get_input_status(self, register):
+        return self.read_bit(register -1 , functioncode=2)
 
-    def  input_register(self):
+    def  dump_input_register(self):
         number_registers = 33
 
         l = None
@@ -92,7 +95,10 @@ class HeruFTX( minimalmodbus.Instrument ):
 
         return l
 
-    def  holding_register(self):
+    def get_input_register(self, register):
+        return self.read_bit(register -1 , functioncode=4)
+
+    def  dump_holding_register(self):
         number_registers = 116
 
         l = None
@@ -112,3 +118,6 @@ class HeruFTX( minimalmodbus.Instrument ):
         self.write_register(999, 1191)
         l = l + s
         return l
+    
+    def get_holding_register(self, register):
+        return self.read_bit(register -1 , functioncode=3)

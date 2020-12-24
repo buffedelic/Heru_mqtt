@@ -15,7 +15,7 @@ instr.serial.timeout  = 0.2 #Timeout might be adjusted to allow full reading of 
 instr.debug = False
 instr.precalculate_read_size = False
 
-topics = ["hvac/heru/power/set",
+switch = ["hvac/heru/power/set",
          "hvac/heru/over_pressure_mode/set",
          "hvac/heru/boost_mode/set",
          "hvac/heru/away_mode/set",
@@ -25,14 +25,14 @@ topics = ["hvac/heru/power/set",
 def on_subscribe(client, userdata, mid, granted_qos):
     #function to anounce availability
     print("Subscribed: "+str(mid)+" "+str(granted_qos)+" "+str(userdata)+" "+str(client))
-    print("Polling register " + str(mid) + " " + topics[ int(mid) - 1 ])
+    print("Polling register " + str(mid) + " " + switch[ int(mid) - 1 ])
     poll_device(int(mid))
 
 def on_message(client, userdata, msg):
     #handle message
     print(msg.topic+" "+str(msg.qos)+" "+str(msg.payload))
-    print("Setting register " + str(topics.index(msg.topic) + 1) + " " + msg.topic)
-    instr.set_coil_status(topics.index(msg.topic) + 1, int(msg.payload))
+    print("Setting register " + str(switch.index(msg.topic) + 1) + " " + msg.topic)
+    instr.set_coil_status(switch.index(msg.topic) + 1, int(msg.payload))
 
 def poll_device(register):
     answer = None
@@ -41,7 +41,7 @@ def poll_device(register):
             answer = instr.get_coil_status(register)
         except:
             pass         
-    publish.single(topics[register - 1], answer, qos = 2, retain=True, hostname="homeassistant.lan", auth={'username':"buff", 'password':"mammas"}, client_id="IVT")
+    publish.single(switch[register - 1], answer, qos = 2, retain=True, hostname="homeassistant.lan", auth={'username':"buff", 'password':"mammas"}, client_id="IVT")
 
     
 
@@ -66,7 +66,7 @@ if __name__ == '__main__':
     #client.on_connect = on_connect
     client.on_message = on_message
 
-    for topic in topics:
+    for topic in switch:
         client.subscribe(topic)
     client.loop_start()
     # client.loop_forever()
