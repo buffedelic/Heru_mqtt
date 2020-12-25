@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 ExecStart=/usr/bin/python3 -u publish_ftx_temp.py
-WorkingDirectory=/home/pi/Heru_mqqt/
+WorkingDirectory=/home/pi/Heru_mqtt/
 StandardOutput=inherit
 StandardError=inherit
 Restart=always

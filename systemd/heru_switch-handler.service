@@ -1,0 +1,14 @@
+[Unit]
+Description=Heru switchwes publish and control via mqtt
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 -u ftx_switch.py
+WorkingDirectory=/home/pi/Heru_mqtt/
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+User=pi
+
+[Install]
+WantedBy=multi-user.target
