@@ -6,3 +6,4 @@ power-pi.txt
 .vscode
 test.py
 __pycache__
+*.pyc

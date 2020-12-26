@@ -33,7 +33,7 @@ def on_connect(client, userdata, flags, rc):
 
 def on_subscribe(client, userdata, mid, granted_qos):
     #function to anounce availability
-    print("Subscribed: "+str(mid)+" "+str(granted_qos)+" "+str(userdata)+" "+str(client))
+    # print("Subscribed: "+str(mid)+" "+str(granted_qos)+" "+str(userdata)+" "+str(client))
     #print("Polling register " + str(mid) + " " + switch[ int(mid) - 1 ])
     poll_device(int(mid))
 
@@ -72,18 +72,18 @@ if __name__ == '__main__':
     
     broker_adress='homeassistant'
     subscribe_topic='hvac/heru/power/set'
-    print("Connecting to broker {}".format(broker_adress))
+    # print("Connecting to broker {}".format(broker_adress))
     client = mqtt.Client(client_id="Heru control", clean_session=True)
     client.username_pw_set("buff", "mammas")
     client.connect(broker_adress, 1883)
     client.on_subscribe = on_subscribe
     client.on_message = on_message
     client.on_connect = on_connect
-    
+
     client.loop_start()
 
     schedule = SafeScheduler()
-    schedule.every(1).minutes.do(update_functions)
+    schedule.every(10).minutes.do(update_functions)
     schedule.every(1440).minutes.do(update_alarms)
     while True:
         schedule.run_pending()

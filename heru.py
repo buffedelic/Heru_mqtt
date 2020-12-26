@@ -2,6 +2,10 @@
 
 import minimalmodbus
 
+'''
+Heru modbus wrapper
+'''
+
 class HeruFTX( minimalmodbus.Instrument ):
     
     def __init__(self, portname, slaveaddress):
@@ -95,7 +99,7 @@ class HeruFTX( minimalmodbus.Instrument ):
     def get_input_register(self, register):
         try:
             return self.read_bit(register -1 , functioncode=4)
-        else:
+        except:
             return None
 
     def dump_holding_register(self):

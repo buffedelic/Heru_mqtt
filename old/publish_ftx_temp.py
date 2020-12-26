@@ -30,7 +30,7 @@ def publish(sc):
 		try:
 			temp = instr.read_registers(1, 7, functioncode=4)
 		except:
-			pass
+			print("Failed to rad temperaures from instrument")
 
 	tempDec = []
 	for i in temp:
@@ -45,7 +45,7 @@ def publish(sc):
 
 	def publish_message(message, topic=""):
 
-		print("Publishing to MQTT message: ")
+		print("Publishing to MQTT: ")
 		print(str(message) )
 		mqtt.multiple(message, hostname=mqtt_server, auth={'username':mqtt_user, 'password':mqtt_password}, client_id="Heru temp")
 
@@ -57,11 +57,11 @@ def publish(sc):
 	message.append({'topic':"hvac/heru/temp/wheel_temp", 'payload': "{}".format(str(tempDec[5]))})
 
 
-	print("Got these temperatures from hvac:")
-	print(tempDec)
-	print("---------------------------------------------------")
+	# print("Got these temperatures from hvac:")
+	# print(tempDec)
+	# print("---------------------------------------------------")
 
-	publish_message(message)    
+	publish_message(message)
 	
 	s.enter(loopTime, 1, publish, (sc,))
 
