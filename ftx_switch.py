@@ -6,7 +6,7 @@ import minimalmodbus
 import paho.mqtt.client as mqtt
 import paho.mqtt.publish as publish
 import time
-import schedule
+from safe_schedule import SafeScheduler
 
 
 
@@ -44,11 +44,9 @@ def on_message(client, userdata, msg):
     instr.set_coil_status(switch.index(msg.topic) + 1, int(msg.payload))
 
 def poll_device(register):
-    try:
-        answer = instr.get_coil_status(register)
-    except:
-        pass 
-    publish.single(switch[register - 1], answer, qos = 2, retain=True, hostname="homeassistant.lan", auth={'username':"buff", 'password':"mammas"}, client_id="Heru Control")
+    answer = instr.get_coil_status(register)
+    if answer is not None:
+        publish.single(switch[register - 1], answer, qos = 2, retain=True, hostname="homeassistant.lan", auth={'username':"buff", 'password':"mammas"}, client_id="Heru Control")
 
 def update_functions():
     for i in range(1, 5):
@@ -81,15 +79,11 @@ if __name__ == '__main__':
     client.on_subscribe = on_subscribe
     client.on_message = on_message
     client.on_connect = on_connect
-
-
+    
     client.loop_start()
-    # client.loop_forever()
 
-    # while True:
-    #     pass
-        # time.sleep(15)
-    schedule.every(5).minutes.do(update_functions)
+    schedule = SafeScheduler()
+    schedule.every(1).minutes.do(update_functions)
     schedule.every(1440).minutes.do(update_alarms)
     while True:
         schedule.run_pending()
