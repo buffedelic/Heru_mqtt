@@ -28,18 +28,12 @@ class HeruFTX( minimalmodbus.Instrument ):
         return l
     
     def get_coil_status(self, register):
-        return self.read_bit(register -1 , functioncode=1)
+        try:
+            return self.read_bit(register -1 , functioncode=1)
+        except:
+            return None
     
     def set_coil_status(self, register, value=None):
-
-        ### Functioncode 5 ########
-        #0x00001 Unit on
-        #0x00002 Overpressure mode
-        #0x00003 Boost mode
-        #0x00004 Away mode
-        #0x00005 Clear Alarms
-        #0x00006 Reset filter timer
-        ###########################
         try:    
             if value.lower() == "off": #format value from human language
                 value = 0
@@ -81,7 +75,10 @@ class HeruFTX( minimalmodbus.Instrument ):
         return l
     
     def get_input_status(self, register):
-        return self.read_bit(register -1 , functioncode=2)
+        try:
+            return self.read_bit(register -1 , functioncode=2)
+        except:
+            return None
 
     def  dump_input_register(self):
         number_registers = 33
@@ -96,9 +93,12 @@ class HeruFTX( minimalmodbus.Instrument ):
         return l
 
     def get_input_register(self, register):
-        return self.read_bit(register -1 , functioncode=4)
+        try:
+            return self.read_bit(register -1 , functioncode=4)
+        else:
+            return None
 
-    def  dump_holding_register(self):
+    def dump_holding_register(self):
         number_registers = 116
 
         l = None
@@ -120,4 +120,7 @@ class HeruFTX( minimalmodbus.Instrument ):
         return l
     
     def get_holding_register(self, register):
-        return self.read_bit(register -1 , functioncode=3)
+        try:
+            return self.read_bit(register -1 , functioncode=3)
+        except:
+            return None
