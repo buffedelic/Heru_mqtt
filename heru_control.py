@@ -33,8 +33,8 @@ heru_temp       = True      # Reporting temperatures via mgtt
 
 # Scheduler times, minutes
 t_temp = 1
-t_switch = 10   # Polling to ofter seems to break instr connection and throwing exception in scheduler thread, therefore safescheduler
-t_alarm = 1440
+t_switch = 5   # Polling to ofter seems to break instr connection and throwing exception in scheduler thread, therefore safescheduler
+t_alarm = 120
 
 ####################################################################################################
 
@@ -96,7 +96,7 @@ def update_alarms():
 def publish_temp():
     print("Publishing temperatures to MQTT: ")
     message = fetch_temp()
-    print(str(message) )
+#    print(str(message) )
     publish.multiple(message, hostname=mqtt_broker, auth={'username':mqtt_user, 'password':mqtt_password}, client_id="Heru temp")
 
 if __name__ == '__main__':

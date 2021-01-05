@@ -47,11 +47,11 @@ class HeruFTX( minimalmodbus.Instrument ):
             pass
 
         # Check if state change is needed
-        if self.read_bit(register -1 , functioncode=1) is not value:
-            try:
-                self.write_bit(register -1, value, functioncode=5)
-            except:
-                print("Failed to communicate with instrument")
+#        if self.read_bit(register -1 , functioncode=1) is not value:
+        try:
+            self.write_bit(register -1, value, functioncode=5)
+        except:
+            print("Failed to communicate with instrument")
 
 
     def dump_input_status(self, human=False):
