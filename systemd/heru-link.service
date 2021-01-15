@@ -3,7 +3,7 @@ Description=Heru Control
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/python3 -u heru_control.py
+ExecStart=/usr/bin/python3 -u heru_link.py
 WorkingDirectory=/home/pi/Heru_mqtt/
 StandardOutput=inherit
 StandardError=inherit
