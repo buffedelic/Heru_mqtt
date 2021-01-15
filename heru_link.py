@@ -7,6 +7,7 @@ import paho.mqtt.client as mqtt
 import paho.mqtt.publish as publish
 import time
 from safe_schedule import SafeScheduler
+import json
 # import sys
 # from decimal import *
 
@@ -36,11 +37,11 @@ sensor_topic = [
     "hvac/heru/temp/inside_temp",  # not used
     "hvac/heru/temp/wheel_temp"
     ]
-device_config = {
-    "name": "Heru",
-    "model": "100s EC A",
-    "manufacturer": "Östberg"
-    }
+# device_config = json.dumps({
+#     "name": "Heru",
+#     "model": "100s EC A",
+#     "manufacturer": "Östberg"
+#     }, ensure_ascii=False)
 
 # Function booleans
 heru_feedback = True  # Enables feedback or polling if remotecontrol has changed settings
@@ -67,15 +68,15 @@ def fetch_temp():
     tempDec = []
     for i in temp:
         if i > 6000:
-            i = i - 65536 #65535 ar hogsta mojliga int()
+            i = i - 65536 # 65535 ar hogsta mojliga int()
         i = float(i) / 10
         tempDec.append(i)
 
-    message.append({'topic':"hvac/heru/temp/outside_temp",'payload': "{}".format(str(tempDec[0]))})
-    message.append({'topic':"hvac/heru/temp/supply_temp", 'payload': "{}".format(str(tempDec[1]))})
-    message.append({'topic':"hvac/heru/temp/exhaust_temp", 'payload': "{}".format(str(tempDec[2]))})
-    message.append({'topic':"hvac/heru/temp/waste_temp", 'payload': "{}".format(str(tempDec[3]))})
-    message.append({'topic':"hvac/heru/temp/wheel_temp", 'payload': "{}".format(str(tempDec[5]))})
+    message.append({'topic': "hvac/heru/temp/outside_temp",'payload': "{}".format(str(tempDec[0]))})
+    message.append({'topic': "hvac/heru/temp/supply_temp", 'payload': "{}".format(str(tempDec[1]))})
+    message.append({'topic': "hvac/heru/temp/exhaust_temp", 'payload': "{}".format(str(tempDec[2]))})
+    message.append({'topic': "hvac/heru/temp/waste_temp", 'payload': "{}".format(str(tempDec[3]))})
+    message.append({'topic': "hvac/heru/temp/wheel_temp", 'payload': "{}".format(str(tempDec[5]))})
 
     return message
 
@@ -98,46 +99,52 @@ def update_alarms():
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code "+str(rc))
 
+    # msg = {‘topic’:”<topic>”, ‘payload’:”<payload>”, ‘qos’:<qos>, ‘retain’:<retain>}
     sensor_config = []
     for i in range(len(sensor_topic)):
         if i != 4:
             sensor = sensor_topic[i].split('/')[3]
             sensor_config.append({
-                "topic": "homeassistant/sensor/heru-sensor{}/id{}/config".format(i, sensor),
-                "payload": {
-                    "name": "heru-{}".format(sensor),
-                    "state_topic": "{}".format(sensor_topic[i]),
-                    "uniq_id": "heru_{}".format(sensor),
-                    "device_class": "temperature",
-                    "unit_of_meas": "°C",
-                    "device": device_config},
-                "qos": 2,
-                "retain": True})
+                'topic': "homeassistant/sensor/heru-{0}/{0}/config".format(sensor),
+                'payload': json.dumps({
+                    'name': "{}".format(sensor).replace('_', ' ').capitalize(),
+                    'state_topic': "{}".format(sensor_topic[i]),
+                    'uniq_id': "heru_{}".format(sensor),
+                    'device_class': "temperature",
+                    'unit_of_meas': "°C",
+                    'device': {
+                        'name': "Heru",
+                        'model': "100s EC A",
+                        'manufacturer': "Östberg",
+                        "identifiers": ["HERU1"]}
+                    }, indent=2, ensure_ascii=False),
+                'qos': 2,
+                'retain': True})
 
     switch_config = []
     for i in range(len(switch_topic)):
-        switch = sensor_topic[i].split('/')[2]
+        switch = switch_topic[i].split('/')[2]
         switch_config.append({
-            "topic": "homeassistant/switch/heru-switch{}/id{}/config".format(i, switch),
-            "payload": {
-                "command_topic": "hvac/heru/{}/set".format(switch),
-                "name": "heru-{}".format(switch),
-                "state_topic": "{}".format(switch_topic[i]),
-                "uniq_id": "heru_{}".format(switch),
-                "payload_on": "1",
-                "payload_off": "0",
-                "state_off": "0",
-                "state_on": "1",
-                "device": device_config},
-            "qos": 2,
-            "retain": True})
-
+            'topic': "homeassistant/switch/heru-{0}/{0}/config".format(switch),
+            'payload': json.dumps({
+                'command_topic': "hvac/heru/{}/set".format(switch),
+                'name': "{}".format(switch).replace('_', ' ').capitalize(),
+                'state_topic': "{}".format(switch_topic[i]),
+                'uniq_id': "heru_{}".format(switch),
+                'payload_on': "1",
+                'payload_off': "0",
+                'state_off': "0",
+                'state_on': "1",
+                'device': {
+                    'name': "Heru",
+                    'model': "100s EC A",
+                    'manufacturer': "Östberg",
+                    "identifiers": ["HERU1"]}
+                }, indent=2, ensure_ascii=False),
+            'qos': 2,
+            'retain': True})
     config = sensor_config + switch_config
-    publish.multiple(
-        config,
-        hostname=mqtt_broker,
-        auth={'username': mqtt_user, 'password': mqtt_password}, client_id="HeruClient")
-
+    publish.multiple(config, hostname=mqtt_broker, auth={'username': mqtt_user, 'password': mqtt_password}, client_id="HeruConfig")
 
     # Subscribing in on_connect() means that if we lose the connection and
     # reconnect then subscriptions will be renewed.
@@ -172,11 +179,11 @@ if __name__ == '__main__':
     '''
     Initiating rs-485 bus
     '''
-    minimalmodbus._print_out( 'HERU FTX MQTT PUBLISHER')
+    minimalmodbus._print_out('HERU FTX MQTT PUBLISHER')
     instr = HeruFTX(device_port, device_id)
     instr.mode = minimalmodbus.MODE_RTU
     instr.serial.stopbits = 1
-    instr.serial.timeout  = 0.2
+    instr.serial.timeout = 0.2
     instr.debug = False
     instr.precalculate_read_size = False
     print("Instrument started")

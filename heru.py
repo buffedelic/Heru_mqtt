@@ -6,11 +6,12 @@ import minimalmodbus
 Heru modbus wrapper
 '''
 
-class HeruFTX( minimalmodbus.Instrument ):
-    
+
+class HeruFTX(minimalmodbus.Instrument):
+
     def __init__(self, portname, slaveaddress):
         minimalmodbus.Instrument.__init__(self, portname, slaveaddress)
-    
+
     def dump_coil_status(self, human=False):
         number_registers = 6
         i = 0
@@ -30,13 +31,13 @@ class HeruFTX( minimalmodbus.Instrument ):
             l.append(value)
             i = i + 1
         return l
-    
+
     def get_coil_status(self, register):
         try:
             return self.read_bit(register -1 , functioncode=1)
         except:
             return None
-    
+
     def set_coil_status(self, register, value=None):
         try:    
             if value.lower() == "off": #format value from human language
@@ -52,7 +53,6 @@ class HeruFTX( minimalmodbus.Instrument ):
             self.write_bit(register -1, value, functioncode=5)
         except:
             print("Failed to communicate with instrument")
-
 
     def dump_input_status(self, human=False):
         number_registers = 34
@@ -77,14 +77,14 @@ class HeruFTX( minimalmodbus.Instrument ):
                 i = 9
 
         return l
-    
+
     def get_input_status(self, register):
         try:
             return self.read_bit(register -1 , functioncode=2)
         except:
             return None
 
-    def  dump_input_register(self):
+    def dump_input_register(self):
         number_registers = 33
 
         l = None
@@ -122,7 +122,7 @@ class HeruFTX( minimalmodbus.Instrument ):
         self.write_register(999, 1191)
         l = l + s
         return l
-    
+
     def get_holding_register(self, register):
         try:
             return self.read_bit(register -1 , functioncode=3)
