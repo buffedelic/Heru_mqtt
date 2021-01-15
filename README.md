@@ -1,6 +1,7 @@
 # Heru_mqtt
-Modbus to mqtt for hvac unit from Östberg
-Automatic device discovery in Homeassistant
+Modbus to mqtt for hvac unit from Östberg\
+Automatic device discovery in Homeassistant\
+This program runs on a raspberry pi zero w with usb to rs485 dongle connected to the HVAC.\
 
 
 ### ToDo
