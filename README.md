@@ -1,5 +1,6 @@
 # Heru_mqtt
 Modbus to mqtt for hvac unit from Östberg
+Automatic device discovery in Homeassistant
 
 
 ### ToDo
