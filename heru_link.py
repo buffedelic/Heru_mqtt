@@ -116,11 +116,11 @@ def on_connect(client, userdata, flags, rc):
     for i in range(len(sensor_topic)):
         sensor = sensor_topic[i].split('/')[3]
         sensor_config.append({
-            'topic': "homeassistant/sensor/heru/{0}/config".format(sensor),
+            'topic': "homeassistant/sensor/heru/heru-{0}/config".format(sensor),
             'payload': json.dumps({
-                'name': "{}".format(sensor).replace('_', ' ').capitalize(),
+                'name': "Heru {}".format(sensor.replace('_', ' ').capitalize()),
                 'state_topic': "{}".format(sensor_topic[i]),
-                'uniq_id': "heru_{}".format(sensor),
+                'unique_id': "heru_{}".format(sensor),
                 'device_class': "temperature",
                 'unit_of_meas': "°C",
                 'device': {
@@ -136,12 +136,12 @@ def on_connect(client, userdata, flags, rc):
     for i in range(len(switch_topic)):
         switch = switch_topic[i].split('/')[2]
         switch_config.append({
-            'topic': "homeassistant/switch/heru/{0}/config".format(switch),
+            'topic': "homeassistant/switch/heru/heru-{0}/config".format(switch),
             'payload': json.dumps({
                 'command_topic': "hvac/heru/{}/set".format(switch),
-                'name': "{}".format(switch).replace('_', ' ').capitalize(),
+                'name': "Heru {}".format(switch.replace('_', ' ').capitalize()),
                 'state_topic': "{}".format(switch_topic[i]),
-                'uniq_id': "heru_{}".format(switch),
+                'unique_id': "heru_{}".format(switch),
                 'payload_on': "1",
                 'payload_off': "0",
                 'state_off': "0",
