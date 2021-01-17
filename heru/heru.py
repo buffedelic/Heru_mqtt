@@ -14,7 +14,7 @@ class HeruFTX(minimalmodbus.Instrument):
         minimalmodbus.Instrument.__init__(self, portname, slaveaddress)
         self.mode = minimalmodbus.MODE_RTU
         self.serial.stopbits = 1
-        self.serial.timeout = 0.2
+        self.serial.timeout = 0.2  # Might need adjustment for different hardware
         self.debug = False
         self.precalculate_read_size = False
 
@@ -45,6 +45,9 @@ class HeruFTX(minimalmodbus.Instrument):
             return None
 
     def set_coil_status(self, register, value=None):
+        """
+        Used to set set register takes, handle both 1 and 0 aswell as litteral "on" and "off"
+        """
         try:
             if value.lower() == "off":  # format value from human language
                 value = 0

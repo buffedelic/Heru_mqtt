@@ -116,7 +116,7 @@ def on_connect(client, userdata, flags, rc):
     for i in range(len(sensor_topic)):
         sensor = sensor_topic[i].split('/')[3]
         sensor_config.append({
-            'topic': "homeassistant/sensor/heru-{0}/{0}/config".format(sensor),
+            'topic': "homeassistant/sensor/heru/{0}/config".format(sensor),
             'payload': json.dumps({
                 'name': "{}".format(sensor).replace('_', ' ').capitalize(),
                 'state_topic': "{}".format(sensor_topic[i]),
@@ -136,7 +136,7 @@ def on_connect(client, userdata, flags, rc):
     for i in range(len(switch_topic)):
         switch = switch_topic[i].split('/')[2]
         switch_config.append({
-            'topic': "homeassistant/switch/heru-{0}/{0}/config".format(switch),
+            'topic': "homeassistant/switch/heru/{0}/config".format(switch),
             'payload': json.dumps({
                 'command_topic': "hvac/heru/{}/set".format(switch),
                 'name': "{}".format(switch).replace('_', ' ').capitalize(),
