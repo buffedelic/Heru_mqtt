@@ -35,6 +35,9 @@ sensor_topic = [  # Index critical, hardwired in temperature resonse
     "hvac/heru/temp/wheel_temp",
     "hvac/heru/temp/room_temp"  # not used
     ]
+exchange_efficiency_topic = [
+    "hvac/heru/efficiency/temperature_efficiency"
+]
 
 # Function booleans
 heru_feedback = True  # Enables polling if remotecontrol has changed settings
@@ -61,12 +64,16 @@ def fetch_temp():
     # 6 Room temperature                        59.0°C
 
     message = []
+    fetch_retry_succeded = False
     tempList = None
     while tempList is None:
         try:
             tempList = heru.read_registers(1, 7, functioncode=4)
         except:
             print("Failed to read temperaures from instrument, retrying...")
+            fetch_retry_succeded = True
+    if fetch_retry_succeded:
+        print("Successfull fetch from device after retry")
 
     index = 0
     for temp in tempList:
@@ -77,6 +84,20 @@ def fetch_temp():
             'topic': sensor_topic[index],
             'payload': "{}".format(str(temp))})
         index += 1
+
+    """
+    n=(ti-tu)/(tf-tu)
+
+    ti = tilluft temperatur (efter växlaren/till rummen)
+    tu = uteluft temperatur
+    tf = frånluft temperatur (från rummen)
+    """
+    temp_efficiency = (
+        100 * ((tempList[1] - tempList[0]) / (tempList[2] - tempList[0]))
+        )
+    message.append({
+            'topic': exchange_efficiency_topic[0],
+            'payload': "{}".format(str(round(float(temp_efficiency), 2)))})
 
     return message
 
@@ -154,8 +175,31 @@ def on_connect(client, userdata, flags, rc):
                 }, indent=2, ensure_ascii=False),
             'qos': 2,
             'retain': True})
+    
+    exchange_efficiency = []
+    for i in range(len(exchange_efficiency_topic)):
+        sensor = exchange_efficiency_topic[i].split('/')[3]
+        sensor_config.append({
+            'topic': "homeassistant/sensor/heru/heru-{0}/config".format(sensor),
+            'payload': json.dumps({
+                'name': "Heru {}".format(sensor.replace('_', ' ').capitalize()),
+                'state_topic': "{}".format(exchange_efficiency_topic[i]),
+                'unique_id': "heru_{}".format(sensor),
+                'device_class': "power_factor",
+                'unit_of_meas': "%",
+                'device': {
+                    'name': "Heru",
+                    'model': "100s EC A",
+                    'manufacturer': "Östberg",
+                    "identifiers": ["HERU1"]}
+                }, indent=2, ensure_ascii=False),
+            'qos': 2,
+            'retain': True})
 
-    config = sensor_config + switch_config
+
+
+
+    config = sensor_config + switch_config + exchange_efficiency
     publish.multiple(
         config,
         hostname=mqtt_broker,
