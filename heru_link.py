@@ -10,6 +10,8 @@ import json
 import os
 
 # ##########################-SETTINGS-##########################
+debug = False  # Set to True to troubleshoot connection to broker, syslog
+
 # Minimalmodbus constants
 device_port = '/dev/ttyUSB0'
 device_id = 1
@@ -238,12 +240,13 @@ def on_connect(client, userdata, flags, rc):
 
 
 def on_subscribe(client, userdata, mid, granted_qos):
-    print(
-        "Subscribed: " +
-        str(mid) + " " +
-        str(granted_qos) + " " +
-        str(userdata) + " " +
-        str(client))
+    if debug:
+        print(
+            "Subscribed: " +
+            str(mid) + " " +
+            str(granted_qos) + " " +
+            str(userdata) + " " +
+            str(client))
     poll_device(int(mid))  # Update real world setting as basepiont
 
 
@@ -272,7 +275,8 @@ def on_disconnect(client, userdata, rc):
 
 
 def on_log(client, obj, level, string):
-    print(string)
+    if debug:
+        print(string)
 
 
 def check_ping():
@@ -311,7 +315,9 @@ if __name__ == '__main__':
     '''
     Initiating rs-485 bus
     '''
-    print("HERU FTX MQTT PUBLISHER STARTED")
+    print("-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-")
+    print("-#  HERU FTX MQTT PUBLISHER STARTED  #-")
+    print("-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-")
     heru = HeruFTX(device_port, device_id)
     print("Instrument initialized and started")
 
@@ -328,6 +334,7 @@ if __name__ == '__main__':
             schedule.every(t_switch).minutes.do(update_switches)
             schedule.every(t_alarm).minutes.do(update_alarms)
             # schedule.every(60).minutes.do(connect_mqtt)
+    print("-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-")
 
     while True:
         schedule.run_pending()
