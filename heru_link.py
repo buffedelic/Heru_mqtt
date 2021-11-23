@@ -7,6 +7,7 @@ import paho.mqtt.publish as publish
 import time
 from safe_schedule import SafeScheduler
 import json
+import os
 
 # ##########################-SETTINGS-##########################
 # Minimalmodbus constants
@@ -14,7 +15,7 @@ device_port = '/dev/ttyUSB0'
 device_id = 1
 
 # MQTT constants
-mqtt_broker = 'homeassistant'
+mqtt_broker = '192.168.1.219'
 mqtt_broker_port = 1883
 mqtt_user = 'buff'
 mqtt_password = 'mammas'
@@ -25,7 +26,7 @@ switch_topic = [
     "hvac/heru/away_mode/set",
     "hvac/heru/clear_alarms/set",
     "hvac/heru/clear_filter_alarms/set"
-    ]
+]
 sensor_topic = [  # Index critical, hardwired in temperature resonse
     "hvac/heru/temp/outside_temp",
     "hvac/heru/temp/supply_temp",
@@ -34,9 +35,10 @@ sensor_topic = [  # Index critical, hardwired in temperature resonse
     "hvac/heru/temp/water_temp",  # not used
     "hvac/heru/temp/wheel_temp",
     "hvac/heru/temp/room_temp"  # not used
-    ]
+]
 exchange_efficiency_topic = [
-    "hvac/heru/efficiency/temperature_efficiency"
+    "hvac/heru/efficiency/temperature_efficiency",
+    "hvac/heru/efficiency/energy_exchange"
 ]
 
 # Function booleans
@@ -85,19 +87,41 @@ def fetch_temp():
             'payload': "{}".format(str(temp))})
         index += 1
 
-    """
+    """ Heat exchanger calculation
     n=(ti-tu)/(tf-tu)
 
     ti = tilluft temperatur (efter växlaren/till rummen)
     tu = uteluft temperatur
     tf = frånluft temperatur (från rummen)
+    q = luftflöde m3/h, balanserat system
+
+    kW = ((q/3600)*1.2*(ti - tu) * 100)/1000
+
+    Required energy to heat up incoming air
+    P = Q x 1,296 x Δt
+    
+    P = effekt i W (effekten på värmebatteriet som vi ska räkna ut)
+    Q = luftflöde i l/s (det luftflödet du räknat ut tidigare enligt ovan formel)
+    Δt = temperaturhöjning i °C
     """
+
     temp_efficiency = (
         100 * ((tempList[1] - tempList[0]) / (tempList[2] - tempList[0]))
-        )
+    )
     message.append({
-            'topic': exchange_efficiency_topic[0],
-            'payload': "{}".format(str(round(float(temp_efficiency), 2)))})
+        'topic': exchange_efficiency_topic[0],
+        'payload': "{}".format(str(round(float(temp_efficiency), 2)))})
+
+    energy_efficiency = (
+        ((260 / 3600) * 1.2 * (tempList[1] - tempList[0]) * 100)/1000
+    )
+
+    if energy_efficiency < 0:
+        energy_efficiency = 0
+
+    message.append({
+        'topic': exchange_efficiency_topic[1],
+        'payload': "{}".format(str(round(float(energy_efficiency), 2)))})
 
     return message
 
@@ -112,7 +136,7 @@ def poll_device(register):
             retain=True,
             hostname=mqtt_broker,
             auth={'username': mqtt_user, 'password': mqtt_password},
-            client_id="HeruControl")
+            client_id="HeruControl-Poll")
 
 
 def update_switches():
@@ -149,7 +173,7 @@ def on_connect(client, userdata, flags, rc):
                     'model': "100s EC A",
                     'manufacturer': "Östberg",
                     "identifiers": ["HERU1"]}
-                }, indent=2, ensure_ascii=False),
+            }, indent=2, ensure_ascii=False),
             'qos': 2,
             'retain': True})
 
@@ -172,13 +196,17 @@ def on_connect(client, userdata, flags, rc):
                     'model': "100s EC A",
                     'manufacturer': "Östberg",
                     "identifiers": ["HERU1"]}
-                }, indent=2, ensure_ascii=False),
+            }, indent=2, ensure_ascii=False),
             'qos': 2,
             'retain': True})
-    
+
     exchange_efficiency = []
     for i in range(len(exchange_efficiency_topic)):
         sensor = exchange_efficiency_topic[i].split('/')[3]
+        if i == 1:
+            unit = "kW"
+        else:
+            unit = "%"
         sensor_config.append({
             'topic': "homeassistant/sensor/heru/heru-{0}/config".format(sensor),
             'payload': json.dumps({
@@ -186,18 +214,15 @@ def on_connect(client, userdata, flags, rc):
                 'state_topic': "{}".format(exchange_efficiency_topic[i]),
                 'unique_id': "heru_{}".format(sensor),
                 'device_class': "power_factor",
-                'unit_of_meas': "%",
+                'unit_of_meas': unit,
                 'device': {
                     'name': "Heru",
                     'model': "100s EC A",
                     'manufacturer': "Östberg",
                     "identifiers": ["HERU1"]}
-                }, indent=2, ensure_ascii=False),
+            }, indent=2, ensure_ascii=False),
             'qos': 2,
             'retain': True})
-
-
-
 
     config = sensor_config + switch_config + exchange_efficiency
     publish.multiple(
@@ -237,6 +262,51 @@ def publish_temp():
         client_id="HeruTemp")
 
 
+def on_disconnect(client, userdata, rc):
+    if rc != 0:
+        print("Unexpected disconnection.")
+        while not check_ping():
+            print("Trying to reconnect in 5 seconds")
+            time.sleep(5)
+        # client.reconnect()
+
+
+def on_log(client, obj, level, string):
+    print(string)
+
+
+def check_ping():
+    hostname = "192.168.1.1"
+    response = os.system("ping -c 1 " + hostname)
+    # and then check the response...
+    if response == 0:
+        local_conn = True
+    else:
+        local_conn = False
+
+    return local_conn
+
+
+# def restart():
+#     command = "/usr/bin/sudo /sbin/shutdown -r now"
+#     import subprocess
+#     process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+#     output = process.communicate()[0]
+#     print output
+
+def connect_mqtt():
+    client = mqtt.Client(client_id="HeruControl", clean_session=True)
+    client.username_pw_set(mqtt_user, mqtt_password)
+    client.connect(mqtt_broker, mqtt_broker_port)
+    client.on_log = on_log
+    client.reconnect_delay_set(min_delay=1, max_delay=120)
+    client.on_subscribe = on_subscribe
+    client.on_message = on_message
+    client.on_connect = on_connect
+    client.on_disconnect = on_disconnect
+    client.loop_start()
+
+
 if __name__ == '__main__':
     '''
     Initiating rs-485 bus
@@ -252,17 +322,12 @@ if __name__ == '__main__':
         schedule.every(t_temp).minutes.do(publish_temp)
     if heru_control:
         print("Control functions enabled")
-        client = mqtt.Client(client_id="HeruControl", clean_session=True)
-        client.username_pw_set(mqtt_user, mqtt_password)
-        client.connect(mqtt_broker, mqtt_broker_port)
-        client.on_subscribe = on_subscribe
-        client.on_message = on_message
-        client.on_connect = on_connect
-        client.loop_start()
+        connect_mqtt()
         if heru_feedback:
             print("Control functions with polling of remote enabled")
             schedule.every(t_switch).minutes.do(update_switches)
             schedule.every(t_alarm).minutes.do(update_alarms)
+            # schedule.every(60).minutes.do(connect_mqtt)
 
     while True:
         schedule.run_pending()
