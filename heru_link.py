@@ -81,12 +81,9 @@ def fetch_temp():
 
     index = 0
     for temp in tempList:
-        if temp > 6000:
-            temp = temp - 65536  # 65535 är högsta möjliga int()
-        temp = float(temp) / 10
         message.append({
             'topic': sensor_topic[index],
-            'payload': "{}".format(str(temp))})
+            'payload': "{}".format(str(format_temperature(temp)))})
         index += 1
 
     """ Heat exchanger calculation
@@ -97,7 +94,7 @@ def fetch_temp():
     tf = frånluft temperatur (från rummen)
     q = luftflöde m3/h, balanserat system
 
-    kW = ((q/3600)*1.2*(ti - tu) * 100)/1000
+    kW = ((q/3600)*1.2*(ti - tu) * 100)/100
 
     Required energy to heat up incoming air
     P = Q x 1,296 x Δt
@@ -106,17 +103,22 @@ def fetch_temp():
     Q = luftflöde i l/s (det luftflödet du räknat ut tidigare enligt ovan formel)
     Δt = temperaturhöjning i °C
     """
-
+    
     temp_efficiency = (
-        100 * ((tempList[1] - tempList[0]) / (tempList[2] - tempList[0]))
+        100 * ((format_temperature(tempList[1]) - format_temperature(tempList[0])) / (format_temperature(tempList[2]) - format_temperature(tempList[0])))
     )
     message.append({
         'topic': exchange_efficiency_topic[0],
         'payload': "{}".format(str(round(float(temp_efficiency), 2)))})
 
     energy_efficiency = (
-        ((260 / 3600) * 1.2 * (tempList[1] - tempList[0]) * 100)/1000
+        ((260 / 3600) * 1.2 * (format_temperature(tempList[1]) - format_temperature(tempList[0])) * 100)/100
     )
+    if debug:
+        print(tempList[1])
+        print(tempList[0])
+        print(tempList[1] - tempList[0])
+        print(energy_efficiency)
 
     if energy_efficiency < 0:
         energy_efficiency = 0
@@ -126,6 +128,13 @@ def fetch_temp():
         'payload': "{}".format(str(round(float(energy_efficiency), 2)))})
 
     return message
+
+
+def format_temperature(temp):
+    if temp > 6000:
+        temp = temp - 65536  # 65535 är högsta möjliga int(), negativt
+    temp = float(temp) / 10
+    return temp
 
 
 def poll_device(register):
