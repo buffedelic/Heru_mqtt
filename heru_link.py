@@ -98,12 +98,12 @@ def fetch_temp():
 
     Required energy to heat up incoming air
     P = Q x 1,296 x Δt
-    
+
     P = effekt i W (effekten på värmebatteriet som vi ska räkna ut)
     Q = luftflöde i l/s (det luftflödet du räknat ut tidigare enligt ovan formel)
     Δt = temperaturhöjning i °C
     """
-    
+
     temp_efficiency = (
         100 * ((format_temperature(tempList[1]) - format_temperature(tempList[0])) / (format_temperature(tempList[2]) - format_temperature(tempList[0])))
     )
@@ -114,15 +114,6 @@ def fetch_temp():
     energy_efficiency = (
         ((260 / 3600) * 1.2 * (format_temperature(tempList[1]) - format_temperature(tempList[0])) * 100)/100
     )
-    if debug:
-        print(tempList[1])
-        print(tempList[0])
-        print(tempList[1] - tempList[0])
-        print(energy_efficiency)
-
-    if energy_efficiency < 0:
-        energy_efficiency = 0
-
     message.append({
         'topic': exchange_efficiency_topic[1],
         'payload': "{}".format(str(round(float(energy_efficiency), 2)))})
@@ -143,8 +134,20 @@ def poll_device(register):
         publish.single(
             switch_topic[register - 1],
             answer,
+            qos=0,
+            retain=False,
+            hostname=mqtt_broker,
+            auth={'username': mqtt_user, 'password': mqtt_password},
+            client_id="HeruControl-Poll")
+
+def poll_device_switches(register):
+    answer = heru.get_coil_status(register)
+    if answer is not None:
+        publish.single(
+            switch_topic[register - 1],
+            answer,
             qos=2,
-            retain=True,
+            retain=False,
             hostname=mqtt_broker,
             auth={'username': mqtt_user, 'password': mqtt_password},
             client_id="HeruControl-Poll")
@@ -152,7 +155,7 @@ def poll_device(register):
 
 def update_switches():
     for i in range(1, 5):
-        poll_device(i)
+        poll_device_switches(i)
         time.sleep(2)
 
 
@@ -185,7 +188,7 @@ def on_connect(client, userdata, flags, rc):
                     'manufacturer': "Östberg",
                     "identifiers": ["HERU1"]}
             }, indent=2, ensure_ascii=False),
-            'qos': 2,
+            'qos': 1,
             'retain': True})
 
     switch_config = []
@@ -232,7 +235,7 @@ def on_connect(client, userdata, flags, rc):
                     'manufacturer': "Östberg",
                     "identifiers": ["HERU1"]}
             }, indent=2, ensure_ascii=False),
-            'qos': 2,
+            'qos': 1,
             'retain': True})
 
     config = sensor_config + switch_config + exchange_efficiency
