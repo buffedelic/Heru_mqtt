@@ -10,7 +10,7 @@ import json
 import os
 
 # ##########################-SETTINGS-##########################
-debug = False  # Set to True to troubleshoot connection to broker, syslog
+debug = True  # Set to True to troubleshoot connection to broker, syslog
 
 # Minimalmodbus constants
 device_port = '/dev/ttyUSB0'
@@ -81,6 +81,7 @@ def fetch_temp():
 
     index = 0
     for temp in tempList:
+        print(temp)
         message.append({
             'topic': sensor_topic[index],
             'payload': "{}".format(str(format_temperature(temp)))})

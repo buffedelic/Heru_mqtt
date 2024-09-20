@@ -1,6 +1,6 @@
-minimalmodbus==2.0.1
-paho-mqtt==2.1.0
+minimalmodbus==1.0.2
+paho-mqtt==1.5.1
 pymodbus==2.4.0
 pyserial==3.5
 RPi.GPIO==0.7.0
-schedule==1.2.2
+schedule==0.6.0

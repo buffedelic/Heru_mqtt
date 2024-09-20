@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import minimalmodbus
+print(minimalmodbus._get_diagnostic_string())
 
 
 class HeruFTX(minimalmodbus.Instrument):
@@ -14,7 +15,7 @@ class HeruFTX(minimalmodbus.Instrument):
         minimalmodbus.Instrument.__init__(self, portname, slaveaddress)
         self.mode = minimalmodbus.MODE_RTU
         self.serial.stopbits = 1
-        self.serial.timeout = 0.2  # Might need adjustment for different hardware
+        self.serial.timeout = 0.3  # Might need adjustment for different hardware (0.5)
         self.debug = False
         self.precalculate_read_size = False
 
@@ -33,6 +34,7 @@ class HeruFTX(minimalmodbus.Instrument):
                         else:
                             value = "On"
                 except:
+                    #print("!!!!!!!!!!!!!!!!!!!!!!!!")
                     pass
             data.append(value)
             i = i + 1
