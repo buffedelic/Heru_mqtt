@@ -4,6 +4,7 @@
 from heru.heru import HeruFTX
 import paho.mqtt.client as mqtt
 import paho.mqtt.publish as publish
+from paho.mqtt.enums import MQTTProtocolVersion
 import time
 from safe_schedule import SafeScheduler
 import json
@@ -81,7 +82,6 @@ def fetch_temp():
 
     index = 0
     for temp in tempList:
-        print(temp)
         message.append({
             'topic': sensor_topic[index],
             'payload': "{}".format(str(format_temperature(temp)))})
@@ -169,8 +169,8 @@ def update_alarms():
 # ##########################-MQTT FUNCTIONS-##########################
 
 
-def on_connect(client, userdata, flags, rc):
-    print("Connected with result code "+str(rc))
+def on_connect(client, userdata, flags, reason_code, properties):
+    print("Connected with result code "+str(reason_code))
 
     sensor_config = []
     for i in range(len(sensor_topic)):
@@ -243,6 +243,7 @@ def on_connect(client, userdata, flags, rc):
     publish.multiple(
         config,
         hostname=mqtt_broker,
+        protocol=MQTTProtocolVersion.MQTTv5,
         auth={'username': mqtt_user, 'password': mqtt_password},
         client_id="HeruConfig")
 
@@ -252,14 +253,13 @@ def on_connect(client, userdata, flags, rc):
         client.subscribe(topic)
 
 
-def on_subscribe(client, userdata, mid, granted_qos):
-    if debug:
-        print(
-            "Subscribed: " +
-            str(mid) + " " +
-            str(granted_qos) + " " +
-            str(userdata) + " " +
-            str(client))
+def on_subscribe(client, userdata, mid, reason_code_list, properties):
+    # Since we subscribed only for a single channel, reason_code_list contains
+    # a single entry
+    if reason_code_list[0].is_failure:
+        print(f"Broker rejected you subscription: {reason_code_list[0]}")
+    else:
+        print(f"Broker granted the following QoS: {reason_code_list[0].value}")
     poll_device(int(mid))  # Update real world setting as basepiont
 
 
@@ -274,12 +274,13 @@ def publish_temp():
     publish.multiple(
         message,
         hostname=mqtt_broker,
+        protocol=MQTTProtocolVersion.MQTTv5,
         auth={'username': mqtt_user, 'password': mqtt_password},
         client_id="HeruTemp")
 
 
-def on_disconnect(client, userdata, rc):
-    if rc != 0:
+def on_disconnect(client, userdata, flags, reason_code, properties):
+    if rc > 0:
         print("Unexpected disconnection.")
         while not check_ping():
             print("Trying to reconnect in 5 seconds")
@@ -312,7 +313,7 @@ def check_ping():
 #     print output
 
 def connect_mqtt():
-    client = mqtt.Client(client_id="HeruControl", clean_session=True)
+    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id="HeruControl", clean_session=True)
     client.username_pw_set(mqtt_user, mqtt_password)
     client.connect(mqtt_broker, mqtt_broker_port)
     client.on_log = on_log
