@@ -9,6 +9,7 @@ import time
 from safe_schedule import SafeScheduler
 import json
 import os
+import uptime
 
 # ##########################-SETTINGS-##########################
 debug = True  # Set to True to troubleshoot connection to broker, syslog
@@ -141,6 +142,7 @@ def poll_device(register):
             auth={'username': mqtt_user, 'password': mqtt_password},
             client_id="HeruControl-Poll")
 
+
 def poll_device_switches(register):
     answer = heru.get_coil_status(register)
     if answer is not None:
@@ -220,15 +222,17 @@ def on_connect(client, userdata, flags, reason_code, properties):
         sensor = exchange_efficiency_topic[i].split('/')[3]
         if i == 1:
             unit = "kW"
+            devclass = "power"
         else:
             unit = "%"
+            devclass = "power_factor"
         sensor_config.append({
             'topic': "homeassistant/sensor/heru/heru-{0}/config".format(sensor),
             'payload': json.dumps({
                 'name': "Heru {}".format(sensor.replace('_', ' ').capitalize()),
                 'state_topic': "{}".format(exchange_efficiency_topic[i]),
                 'unique_id': "heru_{}".format(sensor),
-                'device_class': "power_factor",
+                'device_class': devclass,
                 'unit_of_meas': unit,
                 'device': {
                     'name': "Heru",
@@ -270,6 +274,15 @@ def on_message(client, userdata, msg):
 
 def publish_temp():
     print("Publishing temperatures to MQTT broker")
+    _uptime = round((uptime.uptime() / 3600), 1)
+    publish.single(
+        "hvac/heru/uptime",
+        payload=_uptime,
+        hostname=mqtt_broker,
+        auth={'username': mqtt_user, 'password': mqtt_password},
+        qos=0,
+        retain=False,
+        client_id="HeruTemp")
     message = fetch_temp()
     publish.multiple(
         message,
@@ -280,7 +293,7 @@ def publish_temp():
 
 
 def on_disconnect(client, userdata, flags, reason_code, properties):
-    if rc > 0:
+    if reason_code > 0:
         print("Unexpected disconnection.")
         while not check_ping():
             print("Trying to reconnect in 5 seconds")
