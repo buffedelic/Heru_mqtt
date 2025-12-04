@@ -150,7 +150,7 @@ def poll_device_switches(register):
             switch_topic[register - 1],
             answer,
             qos=2,
-            retain=False,
+            retain=True,
             hostname=mqtt_broker,
             auth={'username': mqtt_user, 'password': mqtt_password},
             client_id="HeruControl-Poll")
