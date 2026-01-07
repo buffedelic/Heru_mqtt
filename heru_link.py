@@ -49,6 +49,7 @@ exchange_efficiency_topic = [
 heru_feedback = True  # Enables polling if remotecontrol has changed settings
 heru_control = True   # Enable control via mqtt
 heru_temp = True      # Reporting temperatures via mgtt
+startup_done = False  # inhibit stored switch status from broker
 
 # Scheduler times, minutes
 t_temp = 1
@@ -149,7 +150,7 @@ def poll_device_switches(register):
         publish.single(
             switch_topic[register - 1],
             answer,
-            qos=2,
+            qos=0,
             retain=True,
             hostname=mqtt_broker,
             auth={'username': mqtt_user, 'password': mqtt_password},
@@ -191,7 +192,7 @@ def on_connect(client, userdata, flags, reason_code, properties):
                     'manufacturer': "Östberg",
                     "identifiers": ["HERU1"]}
             }, indent=2, ensure_ascii=False),
-            'qos': 1,
+            'qos': 0,
             'retain': True})
 
     switch_config = []
@@ -214,7 +215,7 @@ def on_connect(client, userdata, flags, reason_code, properties):
                     'manufacturer': "Östberg",
                     "identifiers": ["HERU1"]}
             }, indent=2, ensure_ascii=False),
-            'qos': 2,
+            'qos': 0,
             'retain': True})
 
     exchange_efficiency = []
@@ -265,11 +266,14 @@ def on_subscribe(client, userdata, mid, reason_code_list, properties):
     else:
         print(f"Broker granted the following QoS: {reason_code_list[0].value}")
     poll_device(int(mid))  # Update real world setting as basepiont
+    startup_done = True
+    print("First startup done")
 
 
 def on_message(client, userdata, msg):
-    print(msg.topic+" "+str(msg.qos)+" "+str(msg.payload))
-    heru.set_coil_status(switch_topic.index(msg.topic) + 1, int(msg.payload))
+    if startup_done is True:
+        print(msg.topic+" "+str(msg.qos)+" "+str(msg.payload))
+        heru.set_coil_status(switch_topic.index(msg.topic) + 1, int(msg.payload))
 
 
 def publish_temp():

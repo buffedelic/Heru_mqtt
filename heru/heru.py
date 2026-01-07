@@ -17,7 +17,7 @@ class HeruFTX(minimalmodbus.Instrument):
         self.serial.stopbits = 1
         self.serial.timeout = 0.3  # Might need adjustment for different hardware (0.5)
         self.debug = False
-        self.precalculate_read_size = False
+        self.precalculate_read_size = False # Setting to True breaks my modified version of minimalmodbus, might not for YOU
 
     def dump_coil_status(self, human=False):
         number_registers = 6
